@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>GrupBoost - Telegram Mini App</title>
+  
+  <!-- Telegram WebApp JS SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            telegram: {
+              bg: '#0f172a',
+              card: '#1e293b',
+              blue: '#24a1de',
+              hover: '#1c82b6',
+              accent: '#38bdf8',
+              gold: '#f59e0b'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    .glow-effect {
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.35);
+    }
+    .glow-gold {
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    }
+    button, input, select, textarea, a {
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between pb-20">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 p-4">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 flex items-center justify-center text-white text-xl shadow-lg glow-effect">
+          <i class="fa-solid fa-rocket"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500">
+            GrupBoost
+          </h1>
+          <p class="text-[11px] text-slate-400 flex items-center gap-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Canlı Otomatik Sistem
+          </p>
+        </div>
+      </div>
+
+      <!-- Boost Badge -->
+      <div class="bg-slate-800/90 border border-slate-700/60 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-inner">
+        <i class="fa-solid fa-bolt text-amber-400 animate-bounce"></i>
+        <div class="text-xs">
+          <span class="text-slate-400 block text-[10px] leading-tight font-medium">Boost Hakkı</span>
+          <span id="boost-count-badge" class="font-bold text-amber-400">2 / 2</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-md mx-auto w-full p-4 space-y-4 flex-1">
+
+    <!-- Cooldown & Info -->
+    <section class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-xl space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-amber-400 font-semibold text-xs">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>24 Saatlik Yenilenme</span>
+        </div>
+        <span id="cooldown-timer" class="text-[11px] font-mono bg-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-700 text-slate-300">
+          Hazır
+        </span>
+      </div>
+      <p class="text-[11px] text-slate-400 leading-relaxed">
+        Her 24 saatte <strong class="text-slate-200">2 ücretsiz boost</strong> tanımlanır. Görevleri yaparak ekstra boost kazanabilirsiniz!
+      </p>
+    </section>
+
+    <!-- Kampanya 1: Resmi Gruba Katıl (+5 Boost) -->
+    <section class="bg-gradient-to-r from-amber-500/10 via-amber-600/15 to-amber-500/10 border border-amber-500/40 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-lg">
+      <div class="space-y-0.5">
+        <span class="text-[9px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded uppercase tracking-wider">Özel Görev #1</span>
+        <h4 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+          <i class="fa-solid fa-users text-amber-400"></i> Resmi Gruba Katıl, <span class="text-amber-400">+5 Boost</span> Kazan!
+        </h4>
+        <p class="text-[10px] text-slate-400">Wolfteam Telegram Grubuna katıl ve anında boost kazan.</p>
+      </div>
+      <button type="button" id="btn-claim-official" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-[11px] px-3 py-2 rounded-xl whitespace-nowrap shadow-md glow-gold transition-transform active:scale-95">
+        Katıl & Al 🎁
+      </button>
+    </section>
+
+    <!-- Kampanya 2: Botu Her Gruba Ekle (+3 Boost) -->
+    <section class="bg-gradient-to-r from-sky-500/10 via-blue-600/15 to-sky-500/10 border border-sky-500/30 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-lg">
+      <div class="space-y-0.5">
+        <span class="text-[9px] bg-sky-500/20 text-sky-300 font-bold px-2 py-0.5 rounded uppercase tracking-wider">Özel Görev #2</span>
+        <h4 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+          <i class="fa-solid fa-robot text-sky-400"></i> Her Eklendiği Grup İçin <span class="text-sky-400">+3 Boost</span>!
+        </h4>
+        <p class="text-[10px] text-slate-400">Botu grubuna ekle; grup otomatik sisteme düşsün!</p>
+      </div>
+      <button type="button" id="btn-claim-bot-add" class="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-[11px] px-3 py-2 rounded-xl whitespace-nowrap shadow-md glow-effect transition-transform active:scale-95">
+        Gruba Ekle ⚡
+      </button>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+      <button type="button" id="tab-explore" class="flex-1 py-2 rounded-lg bg-sky-500 text-white shadow-sm transition-all duration-200">
+        <i class="fa-solid fa-fire mr-1.5"></i>Keşfet & Boost
+      </button>
+      <button type="button" id="tab-add" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition-all duration-200">
+        <i class="fa-solid fa-plus-circle mr-1.5"></i>Grup Ekle
+      </button>
+      <button type="button" id="tab-admin" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition-all duration-200 relative">
+        <i class="fa-solid fa-user-shield mr-1.5"></i>Yönetici
+        <span id="pending-badge" class="hidden absolute top-1 right-2 bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full">0</span>
+      </button>
+    </div>
+
+    <!-- Explore Tab -->
+    <section id="sec-explore" class="space-y-4">
+      <div class="space-y-2">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+          <input type="text" id="search-input" placeholder="Grup veya kanal ara..." 
+                 class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 transition-colors">
+        </div>
+
+        <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-1 text-xs">
+          <button type="button" data-cat="Hepsi" class="cat-btn px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/40 whitespace-nowrap active-cat">Hepsi</button>
+          <button type="button" data-cat="Kripto & Finans" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 whitespace-nowrap">Kripto & Finans</button>
+          <button type="button" data-cat="Yazılım & Teknoloji" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 whitespace-nowrap">Yazılım</button>
+          <button type="button" data-cat="Sohbet & Eğlence" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 whitespace-nowrap">Sohbet</button>
+          <button type="button" data-cat="Oyun" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 whitespace-nowrap">Oyun</button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+        <span>Sıralama (Boost Sayısına Göre)</span>
+        <span id="total-count">0 Topluluk</span>
+      </div>
+
+      <div id="group-list" class="space-y-3"></div>
+    </section>
+
+    <!-- Add Tab -->
+    <section id="sec-add" class="hidden space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-bullhorn text-sky-400"></i> Kendi Grubunu Tanıt
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Grubunu ekle; otomatik filtre kontrolünden sonra anında yayına alınsın!</p>
+        </div>
+
+        <form id="add-group-form" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Grup/Kanal Adı *</label>
+            <input type="text" id="form-title" required placeholder="Grubunuzun adını girin..." 
+                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Telegram Bağlantısı (t.me/grup) *</label>
+            <input type="url" id="form-link" required placeholder="https://t.me/grupadi" 
+                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Kategori *</label>
+            <select id="form-category" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+              <option value="Kripto & Finans">Kripto & Finans</option>
+              <option value="Yazılım & Teknoloji">Yazılım & Teknoloji</option>
+              <option value="Sohbet & Eğlence">Sohbet & Eğlence</option>
+              <option value="Oyun">Oyun & Espor</option>
+              <option value="Diğer">Diğer</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Kısa Açıklama *</label>
+            <textarea id="form-desc" rows="3" required placeholder="Grubunuzun içeriğini açıklayın..." 
+                      class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"></textarea>
+          </div>
+
+          <button type="submit" class="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-semibold py-3 rounded-xl text-xs transition-all duration-200 shadow-lg glow-effect flex items-center justify-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i> Başvuruyu Gönder / Yayına Al
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Admin Tab -->
+    <section id="sec-admin" class="hidden space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-amber-400"></i> Yönetici Kontrol Paneli
+          </h2>
+          <button type="button" id="btn-admin-logout" class="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold">
+            <i class="fa-solid fa-lock"></i> Çıkış Yap
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+            <i class="fa-solid fa-hourglass-half"></i> Onay Bekleyen Başvurular (<span id="pending-count-text">0</span>)
+          </h3>
+          <div id="pending-list" class="space-y-3"></div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 space-y-2">
+          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Yayındaki Grupları Denetle / Kaldır</h3>
+          <div id="admin-active-list" class="space-y-3"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Admin Auth Modal -->
+  <div id="admin-auth-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 relative shadow-2xl">
+      <button type="button" id="btn-close-admin-modal" class="absolute top-3 right-3 text-slate-500 hover:text-slate-300">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 mx-auto flex items-center justify-center text-xl shadow-lg">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h3 class="font-bold text-slate-100 text-sm">Yönetici Paneli Erişimi</h3>
+        <p class="text-xs text-slate-400">Devam etmek için yönetici şifresini girin.</p>
+      </div>
+
+      <form id="admin-auth-form" class="space-y-3">
+        <div>
+          <input type="password" id="admin-password-input" placeholder="Yönetici Şifresi" required
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500 text-center tracking-widest">
+          <p id="admin-pass-error" class="text-[10px] text-rose-400 text-center mt-1 hidden">Hatalı şifre! Lütfen tekrar deneyin.</p>
+        </div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-all duration-200 shadow-lg glow-gold">
+          Giriş Yap
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notice -->
+  <div id="toast" class="fixed top-16 left-1/2 transform -translate-x-1/2 bg-slate-800 border border-slate-700 text-slate-100 text-xs px-4 py-2.5 rounded-xl shadow-2xl z-50 transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-2">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-msg">İşlem başarılı!</span>
+  </div>
+
+  <!-- Footer Navigation -->
+  <footer class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-40">
+    <div class="max-w-md mx-auto flex justify-around py-2">
+      <button type="button" id="footer-btn-home" class="flex flex-col items-center gap-1 text-sky-400">
+        <i class="fa-solid fa-house text-base"></i>
+        <span class="text-[10px]">Ana Sayfa</span>
+      </button>
+      <button type="button" id="footer-btn-add" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-plus-square text-base"></i>
+        <span class="text-[10px]">Ekle</span>
+      </button>
+      <button type="button" id="footer-btn-profile" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-user text-base"></i>
+        <span class="text-[10px]">Profilim</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Profile Modal -->
+  <div id="profile-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 relative">
+      <button type="button" id="btn-close-profile-modal" class="absolute top-3 right-3 text-slate-500 hover:text-slate-300">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="text-center space-y-2">
+        <div id="modal-user-avatar" class="w-16 h-16 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 mx-auto flex items-center justify-center text-2xl font-bold text-white shadow-lg uppercase">
+          TG
+        </div>
+        <h3 id="modal-user-name" class="font-bold text-slate-100">Telegram Kullanıcısı</h3>
+        <p id="modal-user-id" class="text-xs text-slate-400">ID: -</p>
+      </div>
+
+      <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3 space-y-2 text-xs">
+        <div class="flex justify-between text-slate-400">
+          <span>Kalan Boost Hakkı:</span>
+          <span id="modal-boosts" class="font-bold text-amber-400">2</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>Toplam Verilen Boost:</span>
+          <span id="modal-total-given" class="font-bold text-sky-400">0</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>Eklenen Grup Bonusu:</span>
+          <span id="modal-added-groups" class="font-bold text-emerald-400">0 x +3</span>
+        </div>
+      </div>
+
+      <button type="button" id="btn-profile-close" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2.5 rounded-xl font-medium">
+        Kapat
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Küfür ve Yasaklı Kelime Listesi
+    const BAD_WORDS = [
+      "orospu", "amk", "aq", "sik", "piç", "kahpe", "göt", "yarrak", 
+      "kumar", "bahis", "kaçak", "illegal", "dolandırıcı", "hack", "phishing"
+    ];
+
+    function containsBadWords(text) {
+      if (!text) return false;
+      const lower = text.toLowerCase();
+      return BAD_WORDS.some(word => lower.includes(word));
+    }
+
+    let tg = null;
+    let tgUser = null;
+
+    try {
+      if (window.Telegram && window.Telegram.WebApp) {
+        tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tgUser = tg.initDataUnsafe?.user;
+      }
+    } catch (err) {
+      console.warn("Telegram WebApp initialization bypassed:", err);
+    }
+
+    let groups = [];
+    let pendingGroups = [];
+    let userBoosts = 2;
+    let totalGivenBoosts = 0;
+    let officialBonusClaimed = false;
+    let addedGroupsCount = 0;
+    let selectedCategory = "Hepsi";
+    let cooldownActive = false;
+    let isAdminAuthenticated = false;
+    const ADMIN_PASSWORD = "yonetici5232";
+    const OFFICIAL_GROUP_URL = "https://t.me/WolfteamUserbott";
+    const BOT_USERNAME = "ErvaBosstBot";
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTelegramUserData();
+      loadLocalState();
+      bindEventListeners();
+      renderGroups();
+      renderPendingGroups();
+      renderAdminActiveGroups();
+      checkCooldownState();
+    });
+
+    function bindEventListeners() {
+      document.getElementById('tab-explore').addEventListener('click', () => switchTab('explore'));
+      document.getElementById('tab-add').addEventListener('click', () => switchTab('add'));
+      document.getElementById('tab-admin').addEventListener('click', () => switchTab('admin'));
+
+      document.getElementById('footer-btn-home').addEventListener('click', () => switchTab('explore'));
+      document.getElementById('footer-btn-add').addEventListener('click', () => switchTab('add'));
+      document.getElementById('footer-btn-profile').addEventListener('click', showProfileModal);
+
+      document.getElementById('search-input').addEventListener('input', filterGroups);
+
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cat = e.currentTarget.getAttribute('data-cat');
+          setCategory(cat);
+        });
+      });
+
+      document.getElementById('add-group-form').addEventListener('submit', handleAddGroup);
+      document.getElementById('admin-auth-form').addEventListener('submit', handleAdminAuth);
+
+      document.getElementById('btn-close-admin-modal').addEventListener('click', hideAdminAuthModal);
+      document.getElementById('btn-close-profile-modal').addEventListener('click', hideProfileModal);
+      document.getElementById('btn-profile-close').addEventListener('click', hideProfileModal);
+      document.getElementById('btn-admin-logout').addEventListener('click', lockAdminPanel);
+      
+      document.getElementById('btn-claim-official').addEventListener('click', handleClaimOfficialBonus);
+      document.getElementById('btn-claim-bot-add').addEventListener('click', handleClaimBotAddBonus);
+    }
+
+    function loadLocalState() {
+      try {
+        const storedGroups = localStorage.getItem('grupboost_groups');
+        groups = storedGroups ? JSON.parse(storedGroups) : [
+          { id: 'g_default', title: 'Wolfteam Resmi Topluluk', link: OFFICIAL_GROUP_URL, category: 'Sohbet & Eğlence', description: 'GrupBoost ve Wolfteam resmi paylaşım ve destek grubu.', boosts: 15 }
+        ];
+      } catch (e) { groups = []; }
+
+      try {
+        const storedPending = localStorage.getItem('grupboost_pending');
+        pendingGroups = storedPending ? JSON.parse(storedPending) : [];
+      } catch (e) { pendingGroups = []; }
+
+      try {
+        const storedUser = localStorage.getItem('grupboost_user_data');
+        if (storedUser) {
+          const data = JSON.parse(storedUser);
+          userBoosts = data.remainingBoosts !== undefined ? data.remainingBoosts : 2;
+          totalGivenBoosts = data.totalGivenBoosts || 0;
+          officialBonusClaimed = data.officialBonusClaimed || false;
+          addedGroupsCount = data.addedGroupsCount || 0;
+        }
+      } catch (e) {
+        userBoosts = 2;
+        totalGivenBoosts = 0;
+        officialBonusClaimed = false;
+        addedGroupsCount = 0;
+      }
+      
+      if (officialBonusClaimed) {
+        const btn = document.getElementById('btn-claim-official');
+        btn.innerText = "Alındı ✓";
+        btn.disabled = true;
+        btn.className = "bg-slate-800 text-slate-500 font-bold text-[11px] px-3 py-2 rounded-xl cursor-not-allowed";
+      }
+
+      updateBadge();
+    }
+
+    function saveGroups() {
+      localStorage.setItem('grupboost_groups', JSON.stringify(groups));
+    }
+
+    function savePendingGroups() {
+      localStorage.setItem('grupboost_pending', JSON.stringify(pendingGroups));
+    }
+
+    function saveUserData() {
+      localStorage.setItem('grupboost_user_data', JSON.stringify({
+        remainingBoosts: userBoosts,
+        totalGivenBoosts: totalGivenBoosts,
+        officialBonusClaimed: officialBonusClaimed,
+        addedGroupsCount: addedGroupsCount
+      }));
+    }
+
+    function initTelegramUserData() {
+      if (tgUser) {
+        const fullName = `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || "Telegram Kullanıcısı";
+        document.getElementById('modal-user-name').innerText = fullName;
+        document.getElementById('modal-user-id').innerText = `@${tgUser.username || tgUser.id}`;
+        
+        const initials = (tgUser.first_name ? tgUser.first_name[0] : 'T') + (tgUser.last_name ? tgUser.last_name[0] : '');
+        document.getElementById('modal-user-avatar').innerText = initials.toUpperCase();
+      } else {
+        document.getElementById('modal-user-name').innerText = "Kullanıcı";
+        document.getElementById('modal-user-id').innerText = "ID: Misafir";
+      }
+    }
+
+    function handleClaimOfficialBonus() {
+      if (officialBonusClaimed) {
+        showToast("Bu ödülü zaten aldın!", "error");
+        return;
+      }
+
+      if (tg && tg.openTelegramLink) {
+        try { tg.openTelegramLink(OFFICIAL_GROUP_URL); } catch(e) { window.open(OFFICIAL_GROUP_URL, '_blank'); }
+      } else {
+        window.open(OFFICIAL_GROUP_URL, '_blank');
+      }
+
+      userBoosts += 5;
+      officialBonusClaimed = true;
+      saveUserData();
+      updateBadge();
+
+      const btn = document.getElementById('btn-claim-official');
+      btn.innerText = "Alındı ✓";
+      btn.disabled = true;
+      btn.className = "bg-slate-800 text-slate-500 font-bold text-[11px] px-3 py-2 rounded-xl cursor-not-allowed";
+
+      showToast("Tebrikler! Resmi gruba katıldığın için +5 Boost yüklendi! 🚀");
+    }
+
+    function handleClaimBotAddBonus() {
+      const addUrl = `https://t.me/${BOT_USERNAME}?startgroup=true`;
+
+      if (tg && tg.openTelegramLink) {
+        try { tg.openTelegramLink(addUrl); } catch(e) { window.open(addUrl, '_blank'); }
+      } else {
+        window.open(addUrl, '_blank');
+      }
+
+      // Her gruba ekleme için +3 Boost tanımlanır
+      userBoosts += 3;
+      addedGroupsCount += 1;
+      saveUserData();
+      updateBadge();
+
+      showToast("Botu gruba eklediğin için +3 Boost hesabına eklendi! 🔥");
+    }
+
+    function switchTab(tab) {
+      if (tg && tg.HapticFeedback) {
+        try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
+      }
+
+      if (tab === 'admin' && !isAdminAuthenticated) {
+        showAdminAuthModal();
+        return;
+      }
+
+      document.getElementById('sec-explore').classList.add('hidden');
+      document.getElementById('sec-add').classList.add('hidden');
+      document.getElementById('sec-admin').classList.add('hidden');
+
+      document.getElementById('tab-explore').className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition-all duration-200";
+      document.getElementById('tab-add').className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition-all duration-200";
+      document.getElementById('tab-admin').className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition-all duration-200 relative";
+
+      if (tab === 'explore') {
+        document.getElementById('sec-explore').classList.remove('hidden');
+        document.getElementById('tab-explore').className = "flex-1 py-2 rounded-lg bg-sky-500 text-white shadow-sm transition-all duration-200";
+        renderGroups();
+      } else if (tab === 'add') {
+        document.getElementById('sec-add').classList.remove('hidden');
+        document.getElementById('tab-add').className = "flex-1 py-2 rounded-lg bg-sky-500 text-white shadow-sm transition-all duration-200";
+      } else if (tab === 'admin') {
+        document.getElementById('sec-admin').classList.remove('hidden');
+        document.getElementById('tab-admin').className = "flex-1 py-2 rounded-lg bg-sky-500 text-white shadow-sm transition-all duration-200 relative";
+        renderPendingGroups();
+        renderAdminActiveGroups();
+      }
+    }
+
+    function showAdminAuthModal() {
+      document.getElementById('admin-password-input').value = '';
+      document.getElementById('admin-pass-error').classList.add('hidden');
+      document.getElementById('admin-auth-modal').classList.remove('hidden');
+    }
+
+    function hideAdminAuthModal() {
+      document.getElementById('admin-auth-modal').classList.add('hidden');
+    }
+
+    function handleAdminAuth(e) {
+      e.preventDefault();
+      const inputPass = document.getElementById('admin-password-input').value;
+      if (inputPass === ADMIN_PASSWORD) {
+        isAdminAuthenticated = true;
+        hideAdminAuthModal();
+        showToast("Yönetici girişi başarılı!");
+        switchTab('admin');
+      } else {
+        document.getElementById('admin-pass-error').classList.remove('hidden');
+      }
+    }
+
+    function lockAdminPanel() {
+      isAdminAuthenticated = false;
+      showToast("Yönetici oturumu kapatıldı.", "error");
+      switchTab('explore');
+    }
+
+    function boostGroup(groupId) {
+      if (userBoosts <= 0) {
+        showToast("Bugün için tüm Boost haklarını kullandın!", "error");
+        return;
+      }
+
+      const group = groups.find(g => g.id === groupId);
+      if (group) {
+        group.boosts = (group.boosts || 0) + 1;
+        userBoosts -= 1;
+        totalGivenBoosts += 1;
+
+        saveGroups();
+        saveUserData();
+
+        updateBadge();
+        renderGroups();
+        showToast(`"${group.title}" başarıyla boostlandı!`);
+
+        if (userBoosts === 0 && !cooldownActive) {
+          startCooldown();
+        }
+      }
+    }
+
+    function renderGroups() {
+      const listEl = document.getElementById('group-list');
+      const searchVal = document.getElementById('search-input').value.toLowerCase();
+
+      let sorted = [...groups].sort((a, b) => (b.boosts || 0) - (a.boosts || 0));
+
+      let filtered = sorted.filter(g => {
+        const matchesCategory = (selectedCategory === "Hepsi") || (g.category === selectedCategory);
+        const matchesSearch = (g.title || '').toLowerCase().includes(searchVal) || (g.description || '').toLowerCase().includes(searchVal);
+        return matchesCategory && matchesSearch;
+      });
+
+      document.getElementById('total-count').innerText = `${filtered.length} Topluluk`;
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="text-center py-10 text-slate-500 space-y-2">
+            <i class="fa-solid fa-inbox text-4xl mb-1"></i>
+            <p class="text-xs font-medium">Henüz kayıtlı veya onaylanmış grup bulunmuyor.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map((group, index) => {
+        let rankClass = "bg-slate-800 text-slate-300";
+        if (index === 0) rankClass = "bg-amber-500/20 text-amber-400 border border-amber-500/30";
+        else if (index === 1) rankClass = "bg-slate-300/20 text-slate-200 border border-slate-300/30";
+        else if (index === 2) rankClass = "bg-amber-700/20 text-amber-600 border border-amber-700/30";
+
+        return `
+          <div class="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 transition-all duration-200 relative">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${rankClass}">
+                    #${index + 1}
+                  </span>
+                  <h3 class="font-bold text-sm text-slate-100 flex items-center gap-1.5">
+                    ${escapeHtml(group.title || '')}
+                  </h3>
+                </div>
+                <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                  ${escapeHtml(group.description || '')}
+                </p>
+                <div class="pt-1 flex items-center gap-3 text-[11px]">
+                  <span class="text-slate-500"><i class="fa-solid fa-tag mr-1"></i>${group.category || 'Genel'}</span>
+                  <a href="${group.link}" target="_blank" onclick="openTelegramLink(event, '${group.link}')" class="text-sky-400 hover:underline flex items-center gap-1 font-medium">
+                    Katıl <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                  </a>
+                </div>
+              </div>
+
+              <div class="flex flex-col items-center justify-center bg-slate-950 border border-slate-800/80 rounded-xl p-2.5 min-w-[70px]">
+                <span class="text-amber-400 font-extrabold text-sm mb-1">
+                  <i class="fa-solid fa-bolt text-xs"></i> ${group.boosts || 0}
+                </span>
+                <button type="button" onclick="boostGroup('${group.id}')" 
+                        class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-[10px] py-1.5 px-2 rounded-lg transition-transform active:scale-95 flex items-center justify-center gap-1 shadow-md glow-gold">
+                  BOOST
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openTelegramLink(e, url) {
+      if (tg && tg.openTelegramLink) {
+        e.preventDefault();
+        try { tg.openTelegramLink(url); } catch(err) { window.open(url, '_blank'); }
+      }
+    }
+
+    function renderPendingGroups() {
+      const pendingEl = document.getElementById('pending-list');
+      const badge = document.getElementById('pending-badge');
+      const countText = document.getElementById('pending-count-text');
+
+      if (!pendingEl) return;
+
+      if (pendingGroups.length > 0) {
+        if(badge) {
+          badge.classList.remove('hidden');
+          badge.innerText = pendingGroups.length;
+        }
+        if(countText) countText.innerText = pendingGroups.length;
+      } else {
+        if(badge) badge.classList.add('hidden');
+        if(countText) countText.innerText = "0";
+      }
+
+      if (pendingGroups.length === 0) {
+        pendingEl.innerHTML = `<p class="text-center text-xs text-slate-500 py-3">Onay bekleyen başvuru bulunmuyor.</p>`;
+        return;
+      }
+
+      pendingEl.innerHTML = pendingGroups.map(group => `
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+          <div class="flex justify-between items-start">
+            <div>
+              <h4 class="font-bold text-xs text-slate-200">${escapeHtml(group.title || '')}</h4>
+              <span class="text-[10px] text-amber-400 font-semibold"><i class="fa-solid fa-clock"></i> Onay Bekliyor</span>
+            </div>
+            <a href="${group.link}" target="_blank" onclick="openTelegramLink(event, '${group.link}')" class="text-[10px] text-sky-400 hover:text-sky-300 font-medium"><i class="fa-solid fa-link"></i> İncele</a>
+          </div>
+          <p class="text-[11px] text-slate-400">${escapeHtml(group.description || '')}</p>
+          <div class="flex gap-2 pt-1">
+            <button type="button" onclick="approveGroup('${group.id}')" class="flex-1 bg-emerald-600/20 border border-emerald-500/40 hover:bg-emerald-600/30 text-emerald-400 text-[11px] py-1.5 rounded-lg font-semibold transition-colors">
+              <i class="fa-solid fa-check mr-1"></i> Onayla & Yayınla
+            </button>
+            <button type="button" onclick="rejectGroup('${group.id}')" class="flex-1 bg-rose-600/20 border border-rose-500/40 hover:bg-rose-600/30 text-rose-400 text-[11px] py-1.5 rounded-lg font-semibold transition-colors">
+              <i class="fa-solid fa-xmark mr-1"></i> Reddet
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAdminActiveGroups() {
+      const activeEl = document.getElementById('admin-active-list');
+      if (!activeEl) return;
+
+      if (groups.length === 0) {
+        activeEl.innerHTML = `<p class="text-center text-xs text-slate-500 py-3">Yayında grup bulunmuyor.</p>`;
+        return;
+      }
+
+      activeEl.innerHTML = groups.map(group => `
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
+          <div class="overflow-hidden">
+            <h4 class="font-bold text-xs text-slate-200 truncate">${escapeHtml(group.title || '')}</h4>
+            <span class="text-[10px] text-amber-400"><i class="fa-solid fa-bolt"></i> ${group.boosts || 0} Boost</span>
+          </div>
+          <button type="button" onclick="removeActiveGroup('${group.id}')" class="bg-rose-600/20 border border-rose-500/40 hover:bg-rose-600/30 text-rose-400 text-[11px] px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap">
+            <i class="fa-solid fa-trash"></i> Kaldır
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function approveGroup(id) {
+      const idx = pendingGroups.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        const approved = pendingGroups.splice(idx, 1)[0];
+        groups.push({
+          id: approved.id,
+          title: approved.title,
+          link: approved.link,
+          category: approved.category,
+          description: approved.description,
+          boosts: 1
+        });
+        saveGroups();
+        savePendingGroups();
+        renderGroups();
+        renderPendingGroups();
+        renderAdminActiveGroups();
+        showToast("Grup onaylandı ve canlıya alındı!");
+      }
+    }
+
+    function rejectGroup(id) {
+      const idx = pendingGroups.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        pendingGroups.splice(idx, 1);
+        savePendingGroups();
+        renderPendingGroups();
+        showToast("Başvuru reddedildi.", "error");
+      }
+    }
+
+    function removeActiveGroup(id) {
+      const idx = groups.findIndex(g => g.id === id);
+      if (idx !== -1) {
+        const removed = groups.splice(idx, 1)[0];
+        saveGroups();
+        renderGroups();
+        renderAdminActiveGroups();
+        showToast(`"${removed.title}" sistemden kaldırıldı!`, "error");
+      }
+    }
+
+    function handleAddGroup(e) {
+      e.preventDefault();
+
+      const title = document.getElementById('form-title').value.trim();
+      const link = document.getElementById('form-link').value.trim();
+      const category = document.getElementById('form-category').value;
+      const description = document.getElementById('form-desc').value.trim();
+
+      if (!title || !link || !description) {
+        showToast("Lütfen tüm alanları doldurun!", "error");
+        return;
+      }
+
+      if (!link.includes("t.me/")) {
+        showToast("Geçerli bir Telegram bağlantısı (t.me/...) girin!", "error");
+        return;
+      }
+
+      const newGroupData = {
+        id: 'g_' + Date.now(),
+        title: title,
+        link: link,
+        category: category,
+        description: description
+      };
+
+      if (containsBadWords(title) || containsBadWords(description)) {
+        pendingGroups.push(newGroupData);
+        savePendingGroups();
+        renderPendingGroups();
+        document.getElementById('add-group-form').reset();
+        showToast("Uyarı: Küfür/Spam filtresine takıldı, yönetici onayına gönderildi.", "error");
+        switchTab('explore');
+      } else {
+        groups.push({ ...newGroupData, boosts: 1 });
+        saveGroups();
+        renderGroups();
+        renderAdminActiveGroups();
+        document.getElementById('add-group-form').reset();
+        showToast("Grubunuz süzgeçten geçip otomatik yayına alındı! 🚀");
+        switchTab('explore');
+      }
+    }
+
+    function setCategory(cat) {
+      selectedCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.getAttribute('data-cat') === cat) {
+          btn.className = "cat-btn px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/40 whitespace-nowrap active-cat";
+        } else {
+          btn.className = "cat-btn px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 whitespace-nowrap";
+        }
+      });
+      renderGroups();
+    }
+
+    function filterGroups() {
+      renderGroups();
+    }
+
+    function checkCooldownState() {
+      const cooldownEndTime = localStorage.getItem('grupboost_cooldown_end');
+      if (cooldownEndTime) {
+        const remaining = Math.floor((parseInt(cooldownEndTime) - Date.now()) / 1000);
+        if (remaining > 0) {
+          startCooldown(remaining);
+        } else {
+          localStorage.removeItem('grupboost_cooldown_end');
+          userBoosts = 2;
+          saveUserData();
+          updateBadge();
+        }
+      }
+    }
+
+    function startCooldown(secondsLeft = 86400) {
+      cooldownActive = true;
+      const endTime = Date.now() + (secondsLeft * 1000);
+      localStorage.setItem('grupboost_cooldown_end', endTime.toString());
+
+      const timerEl = document.getElementById('cooldown-timer');
+
+      const interval = setInterval(() => {
+        const now = Date.now();
+        const diff = Math.floor((endTime - now) / 1000);
+
+        if (diff <= 0) {
+          clearInterval(interval);
+          userBoosts = 2;
+          cooldownActive = false;
+          localStorage.removeItem('grupboost_cooldown_end');
+          timerEl.innerText = "Hazır";
+          saveUserData();
+          updateBadge();
+          showToast("Yeni Boost hakların yüklendi! ⚡");
+          return;
+        }
+
+        const hours = Math.floor(diff / 3600);
+        const mins = Math.floor((diff % 3600) / 60);
+        const secs = diff % 60;
+        timerEl.innerText = `${hours}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+      }, 1000);
+    }
+
+    function updateBadge() {
+      document.getElementById('boost-count-badge').innerText = `${userBoosts} / 2`;
+      document.getElementById('modal-boosts').innerText = userBoosts;
+      document.getElementById('modal-total-given').innerText = totalGivenBoosts;
+      document.getElementById('modal-added-groups').innerText = `${addedGroupsCount} x +3`;
+      
+      const badge = document.getElementById('pending-badge');
+      if (badge) {
+        if (pendingGroups.length > 0) {
+          badge.classList.remove('hidden');
+          badge.innerText = pendingGroups.length;
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+    }
+
+    function showToast(msg, type = "success") {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = msg;
+      if (type === "error") {
+        toastIcon.className = "fa-solid fa-circle-exclamation text-rose-400";
+      } else {
+        toastIcon.className = "fa-solid fa-circle-check text-emerald-400";
+      }
+
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    function showProfileModal() {
+      document.getElementById('profile-modal').classList.remove('hidden');
+    }
+
+    function hideProfileModal() {
+      document.getElementById('profile-modal').classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
